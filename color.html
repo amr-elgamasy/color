@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أداة اختيار الألوان</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            background-color: #121212;
+            color: white;
+        }
+        #color-box {
+            width: 90%;
+            height: 150px;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .box {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 150px;
+            height: 8px;
+            border-radius: 5px;
+            background: #555;
+            outline: none;
+            opacity: 0.9;
+            transition: 0.3s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .color-info {
+            font-size: 18px;
+            margin-top: 10px;
+            font-weight: bold;
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            min-width: 180px;
+        }
+        #pick-color {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        #pick-color:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="color-box"></div>
+
+    <div class="container">
+        <div class="box">
+            <label>🔴 الأحمر</label><br>
+            <input type="range" id="red" min="0" max="255" value="0">
+            <p id="red-value">0</p>
+        </div>
+        <div class="box">
+            <label>🟢 الأخضر</label><br>
+            <input type="range" id="green" min="0" max="255" value="0">
+            <p id="green-value">0</p>
+        </div>
+        <div class="box">
+            <label>🔵 الأزرق</label><br>
+            <input type="range" id="blue" min="0" max="255" value="0">
+            <p id="blue-value">255</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <p class="color-info">RGB: <span id="rgb-value">(0, 0, 255)</span></p>
+        <p class="color-info">HEX: <span id="hex-value">#0000FF</span></p>
+        <p class="color-info">HSL: <span id="hsl-value">(240, 100%, 50%)</span></p>
+    </div>
+
+    <button id="pick-color">📌 اختيار لون من الشاشة</button>
+
+    <script>
+        const redSlider = document.getElementById("red");
+        const greenSlider = document.getElementById("green");
+        const blueSlider = document.getElementById("blue");
+
+        const redValue = document.getElementById("red-value");
+        const greenValue = document.getElementById("green-value");
+        const blueValue = document.getElementById("blue-value");
+
+        const colorBox = document.getElementById("color-box");
+        const rgbValue = document.getElementById("rgb-value");
+        const hexValue = document.getElementById("hex-value");
+        const hslValue = document.getElementById("hsl-value");
+
+        const pickColorButton = document.getElementById("pick-color");
+
+        function updateColor() {
+            let r = redSlider.value;
+            let g = greenSlider.value;
+            let b = blueSlider.value;
+
+            redValue.textContent = r;
+            greenValue.textContent = g;
+            blueValue.textContent = b;
+
+            let rgb = `rgb(${r}, ${g}, ${b})`;
+            let hex = rgbToHex(r, g, b);
+            let hsl = rgbToHsl(r, g, b);
+
+            colorBox.style.backgroundColor = rgb;
+            rgbValue.textContent = rgb;
+            hexValue.textContent = hex;
+            hslValue.textContent = hsl;
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + +b).toString(16).slice(1).toUpperCase();
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255, g /= 255, b /= 255;
+            let max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0;
+            } else {
+                let d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h *= 60;
+            }
+
+            return `hsl(${Math.round(h)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+        }
+
+        async function pickColorFromScreen() {
+            if (!window.EyeDropper) {
+                alert("متصفحك لا يدعم اختيار اللون من الشاشة!");
+                return;
+            }
+
+            const eyeDropper = new EyeDropper();
+            try {
+                const result = await eyeDropper.open();
+                colorBox.style.backgroundColor = result.sRGBHex;
+
+                let rgb = hexToRgb(result.sRGBHex);
+                redSlider.value = rgb.r;
+                greenSlider.value = rgb.g;
+                blueSlider.value = rgb.b;
+
+                updateColor();
+            } catch (error) {
+                console.error("فشل اختيار اللون:", error);
+            }
+        }
+
+        function hexToRgb(hex) {
+            let bigint = parseInt(hex.slice(1), 16);
+            let r = (bigint >> 16) & 255;
+            let g = (bigint >> 8) & 255;
+            let b = bigint & 255;
+            return { r, g, b };
+        }
+
+        pickColorButton.addEventListener("click", pickColorFromScreen);
+
+        redSlider.addEventListener("input", updateColor);
+        greenSlider.addEventListener("input", updateColor);
+        blueSlider.addEventListener("input", updateColor);
+
+        updateColor(); // تحديث اللون عند تحميل الصفحة
+    </script>
+
+</body>
+</html>
